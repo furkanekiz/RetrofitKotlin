@@ -18,12 +18,15 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class ACMain : AppCompatActivity(), AdapterCrypto.Listener {
 
-    private val BASE_URL = "https://api.nomics.com/v1/"
     private var cryptoModels: ArrayList<CryptoModel>? = null
     private var adapterCrypto: AdapterCrypto? = null
 
     //Disposable
     private var compositeDisposable: CompositeDisposable? = null
+
+    companion object {
+        const val BASE_URL = "https://api.nomics.com/v1/"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,11 +36,15 @@ class ACMain : AppCompatActivity(), AdapterCrypto.Listener {
 
         rvCrypto.layoutManager = LinearLayoutManager(this)
 
-        loadData()
+        swipeRefresh.setOnRefreshListener {
+            swipeRefresh.isRefreshing = false
+            loadData()
+        }
 
+        loadData()
     }
 
-    private fun loadData(){
+    private fun loadData() {
         val retrofit = Retrofit.Builder()
             .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
@@ -46,10 +53,12 @@ class ACMain : AppCompatActivity(), AdapterCrypto.Listener {
 
         //val service = retrofit.create(CryptoAPI::class.java)
 
-        compositeDisposable?.add(retrofit.getData()
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(this::handleResponse, this::handleError))
+        compositeDisposable?.add(
+            retrofit.getData()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(this::handleResponse, this::handleError)
+        )
 
         /*
         val call = service.getData()
@@ -79,14 +88,14 @@ class ACMain : AppCompatActivity(), AdapterCrypto.Listener {
          */
     }
 
-    private fun handleResponse(cryptoList: List<CryptoModel>){
+    private fun handleResponse(cryptoList: List<CryptoModel>) {
 
-                cryptoModels = ArrayList(cryptoList)
+        cryptoModels = ArrayList(cryptoList)
 
-                cryptoModels?.let {
-                    adapterCrypto = AdapterCrypto(it,this@ACMain)
-                    rvCrypto.adapter=adapterCrypto
-                }
+        cryptoModels?.let {
+            adapterCrypto = AdapterCrypto(it, this@ACMain)
+            rvCrypto.adapter = adapterCrypto
+        }
     }
 
     private fun handleError(t: Throwable) {
@@ -95,7 +104,7 @@ class ACMain : AppCompatActivity(), AdapterCrypto.Listener {
     }
 
     override fun onItemClicked(cryptoModel: CryptoModel) {
-        Toast.makeText(this, cryptoModel.currency,Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, cryptoModel.currency, Toast.LENGTH_SHORT).show()
     }
 
     override fun onDestroy() {
